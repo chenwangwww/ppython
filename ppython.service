@@ -1,0 +1,10 @@
+[Unit]
+Description=PHP-Python Service
+After=multi-user.target
+ 
+[Service]
+Type=idle
+ExecStart=/usr/local/src/ppython/php_python.py
+
+[Install]
+WantedBy=multi-user.target
