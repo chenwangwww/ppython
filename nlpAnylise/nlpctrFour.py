@@ -11,6 +11,7 @@ ltp = LTP()
 class NlpCtr(object):
     def __init__(self):
         self.seg = None
+        self.words = None
 
     def trans_result(self, depArr, posArr):
         tempposArr = posArr[0]
@@ -159,9 +160,9 @@ class NlpCtr(object):
         dep = ltp.dep(hidden)
         pos = ltp.pos(hidden)
         words = self.trans_result(dep, pos)
-
-        print(self.seg)
-        print(dep)
+        self.words = words
+        # print(self.seg)
+        # print(dep)
 
         if len(words) > 0:
             hed = self.getHED(words)
@@ -199,7 +200,8 @@ class NlpCtr(object):
 
         sou = []
         self.showWords(res, sou)
-        print(sou)
+        # print(sou)
+        # print(res)
         return res
 
     def showWords(self, source, target):
@@ -241,5 +243,6 @@ class NlpCtr(object):
 # res = nlpCtr.abstractSentence('有的水生动物是肺呼吸的')          #(ヨx)(F(x)∧G(x))
 # res = nlpCtr.abstractSentence('一切自然数有大于它的自然数')         #(∀x)(F(x)→(ヨy)(F(y)∧G(x,y)))
 # res = nlpCtr.abstractSentence('每人都有一个父亲')                  #(∀x)(F(x)→(ヨy)(F(y)∧G(x,y)))
+# res = nlpCtr.abstractSentence('整天不是吃饭就是睡觉,活得真像一头猪。')
 
 # print(res)
