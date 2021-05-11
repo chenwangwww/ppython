@@ -80,15 +80,6 @@ class NlpCtr(object):
                 RES.append(word)
                 self.getRelatedInfo(words, word['dep'], RES)
 
-    # 获取修饰主语、宾语的信息（仅索引）
-    def getRelatedInfo2(self, words, GOV, RES):
-        for word in words:
-            if word['gov'] == GOV \
-                    and word['type'] != 'COO' \
-                    and word['type'] != 'WP':
-                RES.append(word['dep'])
-                self.getRelatedInfo2(words, word['dep'], RES)
-
     def getPreds(self, words, HED):
         res = [HED]
         coos = self.getWords(words, HED, 'COO')
@@ -103,23 +94,10 @@ class NlpCtr(object):
                 if word['dep'] not in IGNORES \
                         and word['type'] != 'WP' \
                         and (word['type'] != 'LAD' and self.indexToWord(word['dep'], self.seg) != '和') \
-                        and (word['type'] != 'COO' and word['gov'] == GOV):
+                        and word['type'] != 'COO':
                     RES.append(word['dep'])
                     self.getPredInfo(words, word['dep'], IGNORES, RES)
 
-    # 获取修饰谓语的信息
-    def getPredInfo2(self, words, GOV, IGNORES, RES, Pred):
-        for word in words:
-            if word['gov'] == GOV:
-                if word['dep'] not in IGNORES:
-                    if word['type'] != 'WP':
-                        if word['type'] != 'COO':
-                            RES.append(word['dep'])
-                            self.getPredInfo2(words, word['dep'], IGNORES, RES, Pred)
-                        elif word['gov'] != Pred:
-                            RES.append(word['dep'])
-                            self.getPredInfo2(words, word['dep'], IGNORES, RES, Pred)
-    
     def abstSentReal(self, sentence):
         self.seg, hidden = ltp.seg([sentence])
         dep = ltp.dep(hidden)
@@ -145,13 +123,10 @@ class NlpCtr(object):
                     su = self.getSubject(words, pred)
                     if su is not None:
                         subject = su
-                    #添加修饰谓语的部分
                     resPred = []
                     if not su and subject:
                         resPred += [subject]
-                        #添加修饰主语的部分
-                        self.getRelatedInfo2(words, subject, resPred)
-                    self.getPredInfo2(words, pred, [], resPred, pred)
+                    self.getPredInfo(words, pred, [], resPred)
                     resPred += [pred]
                     resPred.sort()
                     r = ''
@@ -196,35 +171,16 @@ class Mapper(object):
             ['不要', 'ADV', 'not', 'sent']
         ]
 
-    def abstConjs2(self, sentence):
-        sents = nlpCtr.abstractSentence(sentence)
-        conjs = Conjs()
-        for conj in self.conjs:
-            length = len(conj)
-            count = 0
-            resSent = []
-            cc = []
-            for c in conj:
-                for sent in sents:
-                    if c[0] in sent:
-                        count += 1
-                        resSent.append(sent)
-                        cc.append(c)
-            if length == count:
-                for i in range(count):
-                    conjs.push(resSent[i], cc[i]) 
-                others = list(filter(lambda a: a not in resSent, sents))
-                for a in others:
-                    conjs.push(a, ('', 'arrow', '', '')) 
-                break
-        if len(conjs.conjs) == 0:
-            for a in sents:
-                conjs.push(a, ('', '', '', '')) 
-        print(conjs.conjs)
-    
     def abstConjs(self, sentence):
+        print('sentence', sentence)
         res = None
         conjsList = []
+        seg, hidden = ltp.seg([sentence])
+        pos = ltp.pos(hidden)
+        wps = []
+        for i in range(len(pos[0])):
+            if pos[0][i] == 'wp':
+                wps.append(len(''.join(seg[0][:i])))
         for conj in self.conjs:
             length = len(conj)
             count = 0
@@ -235,16 +191,33 @@ class Mapper(object):
                     count += 1
                     indices.append(sentence.find(c[0]))
                     cc.append(c)
+            print('cc', cc)
             if count == length:
                 conjs = Conjs()
                 if count == 2:
-                    conjs.push(sentence[indices[0]: indices[1]], cc[0])
-                    conjs.push(sentence[indices[1]:], cc[1])
-
+                    ind0 = list(
+                        filter(lambda a: a > indices[0] and a < indices[1], wps))
+                    ind1 = list(filter(lambda a: a > indices[1], wps))
+                    if len(wps) > 0:
+                        if len(ind0) > 0:
+                            subsent = sentence[indices[0]: ind0[0]]
+                            conjs.push(subsent, cc[0])
+                        else:
+                            subsent = sentence[indices[0]: indices[1]]
+                            conjs.push(subsent, cc[0])
+                        if len(ind1) > 0:
+                            conjs.push(sentence[indices[1]: ind1[0]], cc[1])
+                    else:
+                        conjs.push(sentence[indices[0]: indices[1]], cc[0])
+                        conjs.push(sentence[indices[1]:], cc[1])
+                    endindex = ind1[0] if len(ind1) > 0 else None
+                    print('ind0. ind1, endindex:', ind0, ind1, endindex)
+                    print('conjs.conjs', conjs.conjs)
+                    print('indices', indices)
                     res = sentence[: indices[0]] + conjs.conjs[1][0]
+                    if endindex is not None:
+                        res += sentence[endindex:]
                     conjsList.append(conjs)
-                    print(conjs.conjs)
-                    break
                     
         res = {
             'conjsList': conjsList,
@@ -256,17 +229,10 @@ class Mapper(object):
         info = self.abstConjs(sentence)
         if info:
             sents = nlpCtr.abstractSentence(info['sentence'])
-            print('sents:', sents)
             newConjs = Conjs()
             for sent in sents:
                 for c in info['conjsList']:
                     conj = c.conjs
-                    i0 = conj[0][0].rstrip('，')
-                    i0 = conj[0][0].rstrip('。')
-                    conj[0] = tuple([i0] + list(conj[0])[1:])
-                    i1 = conj[1][0].rstrip('，')
-                    i1 = conj[1][0].rstrip('。')
-                    conj[1] = tuple([i1] + list(conj[1])[1:])
                     index = sent.find(conj[1][0])
                     if index > -1:
                         a = sent[:index] + conj[0][0] + \
@@ -276,7 +242,7 @@ class Mapper(object):
                         newConjs.conjs.append((b, conj[1][1], conj[1][2]))
                     else:
                         newConjs.conjs.append((sent, 'arrow', ''))
-            print(newConjs.conjs)
+            # print(newConjs.conjs)
             return newConjs
         return None
 
@@ -659,7 +625,7 @@ logMgr = LogMgr()
 # m.abstComplex('我们不要空话，而要行动。')
 # m.abstComplex('学术委员会的每个成员都是博士并且是教授。')
 
-# m.abstSent('任意的整数和任意的浮点数的乘积是浮点数。')
+m.abstSent('任意的整数和任意的浮点数的乘积是浮点数。')
 # m.abstSent('学术委员会的每个成员都是博士并且是教授。')
 # m.abstSent('他整天不是吃饭就是睡觉,活得真像一头猪。')
 # m.abstSent('我们不要美元，而要人名币。')
@@ -685,24 +651,3 @@ logMgr = LogMgr()
 # predLogCtr.PredLog('3的数量等于2的数量')
 # predLogCtr.PredLog('如果里面有左小括号或右小括号，也必须构成小括号')
 # predLogCtr.PredLog('不是水，就是火焰。')
-
-# m.abstComplex('不是水，就是火焰。')
-# m.abstComplex('学术委员会的每个成员都是博士并且是教授。')
-# m.abstComplex('任何整数不是奇数就是偶数')
-# m.abstComplex('他整天不是吃饭就是睡觉,活得真像一头猪。')
-# m.abstComplex('我们不要空话，而要行动。')
-
-# sents = nlpCtr.abstractSentence('他整天不是吃饭就是睡觉,活得真像一头猪。')
-# sents = nlpCtr.abstractSentence('学术委员会的每个成员都是博士并且是教授。')
-# sents = nlpCtr.abstractSentence('任何整数不是奇数就是偶数')
-# sents = nlpCtr.abstractSentence('我们不要空话，而要行动。')
-# sents = nlpCtr.abstractSentence('如果里面有左小括号或右小括号，也必须构成小括号')
-# print('sents:', sents)
-
-# m.abstConjs2('不是水，就是火焰。')
-# m.abstConjs2('学术委员会的每个成员都是博士并且是教授。')
-# m.abstConjs2('任何整数不是奇数就是偶数')
-# m.abstConjs2('他整天不是吃饭就是睡觉,活得真像一头猪。')
-# m.abstConjs2('我们不要空话，而要行动。')
-# m.abstConjs2('如果里面有左小括号或右小括号，也必须构成小括号')
-m.abstConjs2('任意的整数和任意的浮点数的乘积是浮点数。')

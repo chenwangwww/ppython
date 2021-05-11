@@ -1,6 +1,6 @@
 # from typing import Sequence
-# from ltp import LTP
-# ltp = LTP()
+from ltp import LTP
+ltp = LTP()
 
 # sentence = '学术委员会的每个成员都是博士并且是教授。'
 # sentence = '小明、小霞，和小刘是三兄弟。'
@@ -29,17 +29,23 @@
 # sentence = '任意的整数和任意的浮点数的乘积是浮点数。'
 # sentence = '并非x0都是偶数。'
 # sentence = '并非每个自然数都是偶数。'
+# sentence = '1+1*3*(2+4)'
+# sentence = '(1+1)*3/(2+4)'
+# sentence = '(4-3)/(5-3)'
+# sentence = '4-3*5+2'
+# sentence = '4-3*5'
+sentence = '4*3'
 
-# seg,hidden = ltp.seg([sentence])
-# pos = ltp.pos(hidden)
-# sdp = ltp.sdp(hidden)
-# srl = ltp.srl(hidden, keep_empty=False)
-# dep = ltp.dep(hidden)
-# print(seg)
-# print(pos)
-# print(sdp)
-# print(srl)
-# print(dep)
+seg,hidden = ltp.seg([sentence])
+pos = ltp.pos(hidden)
+sdp = ltp.sdp(hidden)
+srl = ltp.srl(hidden, keep_empty=False)
+dep = ltp.dep(hidden)
+print(seg)
+print(pos)
+print(sdp)
+print(srl)
+print(dep)
 
 # a = [(1, [(2, (3, 4)), (2, (3, 4))]), (10, [(20, (30, 40)), (20, (30, 40))])]
 # b = []
