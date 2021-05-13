@@ -1,5 +1,5 @@
-from NlpCtr import nlpCtr
-from ModeCtr import modeCtr
+# from NlpCtr import nlpCtr
+# from ModeCtr import modeCtr
 
 paragraph = """
 在我们的校园里有一处美丽的景色，那就是校园的鱼池。
@@ -23,11 +23,11 @@ questions = [
     '小鱼们不快乐吗？',
 ]
 
-paraList = nlpCtr.paragraphToList(paragraph)
-modeCtr.learn(paraList)
-for q in questions:
-    datas = nlpCtr.abstractSentence(q)
-    modeCtr.question(datas)
+# paraList = nlpCtr.paragraphToList(paragraph)
+# modeCtr.learn(paraList)
+# for q in questions:
+#     datas = nlpCtr.abstractSentence(q)
+#     modeCtr.question(datas)
 
 
 # nlpCtr.abstractSentence('鱼儿们在池塘里欢快地游泳，有的鱼儿在唱歌，有的鱼儿在做游戏。')
@@ -40,9 +40,10 @@ for q in questions:
 # ('池塘里有小鱼吗？')
 # ('他们不是为了自我陶醉而工作')
 # ('小鱼们在池塘里')
+# ('比较爱学校')
 # ('房间里的床', '房间里有床', '床在房间里')
 
-# sent = '他们不是为了自我陶醉而工作'
+# sent = '比较爱学校'
 # from ltp import LTP
 # ltp = LTP()
 # seg, hidden = ltp.seg([sent])
@@ -59,3 +60,34 @@ for q in questions:
 # (['壮丽', '的', '祖国', '大地'], ['a', 'u', 'n', 'n'], [(1, 4, 'ATT'), (2, 1, 'RAD'), (3, 4, 'ATT')])
 # (['小', '鱼', '的', '家', '在', '池塘'], ['a', 'n', 'u', 'n', 'v', 'n'], [(1, 2, 'ATT'), (2, 4, 'ATT'), (3, 2, 'RAD'), (4, 5, 'SBV'), (5, 0, 'HED'), (6, 5, 'VOB')])
 # (['房间', '里', '的', '床'], ['n', 'nd', 'u', 'n'], [(1, 2, 'ATT'), (2, 4, 'ATT'), (3, 2, 'RAD')])
+
+# import re
+
+# sent = ''
+# ret = re.search(r'^$', sent)
+# print(ret.groups()[0:])
+# print(ret.group(0))
+
+# v = [1,2,3]
+# b = list(filter(lambda a: a<1, v))
+# print(b)
+
+# a = 1
+# print(a)
+
+# a = 'g'
+# c = ord(a)
+# print(c)
+
+def test()->int:
+    return 'hello'
+
+class TestC():
+    def __init__(self) -> None:
+        pass
+
+    def t(self) -> str:
+        return (1,2)
+
+print(test())
+print(TestC().t())

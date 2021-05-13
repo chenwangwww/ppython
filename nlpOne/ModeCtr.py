@@ -14,16 +14,29 @@ class NeuronCrtr(object):
 class ModeCtr(object):
     def __init__(self) -> None:
         self._modes = [
-            {'mode': [[r'(.*)', r'(.*)吗$', r'(.*)']], 'res':(self.func1, (0, 1, 2))},
-            {'mode': [[r'(.*)', r'(.*)', r'(.*)什么$']], 'res':(self.func2, (0,1))},
-            {'mode': [[r'(.*)', r'(.*)在', r'(.*)哪里$']], 'res':(self.func2, (0,1))},
+            {'mode': [[r'(.*)', r'(.*)吗$', r'(.*)']], 'res':(self.func1, (0, 1, 2)), 'count': 3},
+            {'mode': [[r'(.*)', r'(.*)', r'(.*)什么$']], 'res':(self.func2, (0,1)), 'count': 3},
+            {'mode': [[r'(.*)', r'(.*)在', r'(.*)哪里$']], 'res':(self.func2, (0,1)), 'count': 3},
+            {'mode': [[r'(.*)', r'是', r'比较(.*)'], [r'.*', r'还是', r'(.*)']], 'res':(self.func4, (0,1,2)), 'count': 3},
             {
                 'mode': [[r'(.*)', r'(.*有)$', r'(.*)'], [r'^(那)$', r'(.*)', r'(.*)']],
-                'res':(self.func3, [(2, 4, 5), (3, 4, 2), (5, 4, 2), (0, 1, 5)])
+                'res':(self.func3, [(2, 4, 5), (3, 4, 2), (5, 4, 2), (0, 1, 5)]),
+                'count': 6
+            },
+            {
+                'mode': [[r'(.+)', r'.*[^有]$', r'.+'], [r'^$', r'(.*)', r'(.+)']],
+                'res':(self.func3, [(0, 1, 2)]),
+                'count': 3
+            },
+            {
+                'mode': [[r'(.*)', r'(.*)有(.*)$', r'(.*)']],
+                'res':(self.func3, [(0, 1, 3), (0, 2, 3)]),
+                'count': 4
             },
             {
                 'mode': [[r'(.*)', r'(.*)坐落着$', r'(.*)']],
-                'res':(self.func3, [(2, 1)])
+                'res':(self.func3, [(2, 1)]),
+                'count': 3
             },
         ]
         self._dataBase = []
@@ -41,6 +54,11 @@ class ModeCtr(object):
     def func3(self, data):
         pass
 
+    def func4(self, data):
+        res = None
+        print(data)
+        return res
+
     def fitMode(self, mode, datas):
         r = []
         for m in mode['mode']:
@@ -49,11 +67,18 @@ class ModeCtr(object):
                 for i in range(3):
                     ret = re.search(m[i], data[i])
                     if ret is not None:
-                        rr.append(ret.group(1))
+                        rr.append(ret.groups()[0:])
                 if len(rr) == 3:
-                    r += rr
+                    temp = []
+                    for v in rr:
+                        if type(v) == tuple:
+                            temp += list(v)
+                        else:
+                            temp.append(v)
+                    r += temp
         # print(len(r), 3*len(mode['mode']))
-        if len(r) == 3*len(mode['mode']):
+        # print('r:', r)
+        if len(r) == mode['count']:
             resFunc, resIndices = mode['res']
             if type(resIndices) == tuple:
                 iter = map(lambda i: r[i], resIndices)
@@ -72,6 +97,7 @@ class ModeCtr(object):
             self.fitMode(mode, datas)
 
     def learn(self, paraList):
+        print(paraList)
         for a in paraList:
             self._dataBase += a
             self.validateMode(a)

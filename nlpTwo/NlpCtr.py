@@ -6,7 +6,7 @@ class NlpCtr(object):
     def __init__(self):
         pass
 
-    def trans_result(self, depArr):
+    def trans_result(self, depArr, posArr):
         tempdepArr = depArr[0]
 
         tempArr = []
@@ -15,6 +15,7 @@ class NlpCtr(object):
                 'dep': item[0],
                 'gov': item[1],
                 'type': item[2],
+                'pos': posArr[0][item[0] - 1]
             }
             tempArr.append(dic)
         return tempArr
@@ -34,11 +35,14 @@ class NlpCtr(object):
                 res = word['dep']
         return res
 
-    def getWords(self, words, GOV, wType):
+    def getWords(self, words, GOV, wType, v = None):
         res = []
         for word in words:
             if word['type'] == wType and word['gov'] == GOV:
-                res.append(word['dep'])
+                if v and word['pos'] == v:
+                    res.append(word['dep'])
+                elif v is None:
+                    res.append(word['dep'])
         res = res if len(res) > 0 else None
         return res
 
@@ -105,7 +109,7 @@ class NlpCtr(object):
         # print(pos)
         # print(dep)
         
-        words = self.trans_result(dep)
+        words = self.trans_result(dep, pos)
         if len(words) > 0:
             hed = self.getHED(words)
             if hed is not None:
